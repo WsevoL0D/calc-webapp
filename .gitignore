@@ -1,0 +1,14 @@
+*.vscode/*
+calc-env
+miscellaneous
+act.secrets
+
+# Byte-compiled / optimized / DLL files
+__pycache__/*
+*.py[cod]
+*~
+*.swp
+# Django stuff:
+*.log
+*.pot
+gcp.secrets
