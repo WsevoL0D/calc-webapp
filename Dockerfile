@@ -21,4 +21,4 @@ COPY --chown=app:app ./calc_app $APP_HOME
 WORKDIR $APP_HOME
 USER app
 
-CMD [ "python", "./manage.py", "runserver", "0.0.0.0:8000"]
+CMD [ "python", "./manage.py", "runserver", "0.0.0.0:8080"]

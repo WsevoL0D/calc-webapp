@@ -1,0 +1,43 @@
+name: Deploy gcp
+
+on:
+  workflow_run:
+    workflows: ['Publish image']
+    types:
+      - completed
+
+jobs:
+
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+    - uses: 'actions/checkout@v3'
+    
+    - name: Set Environment Variables
+      uses: ./.github/actions/setvars
+
+    - uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+    - id: 'deploy'
+      uses: 'google-github-actions/deploy-cloudrun@v1'
+      with:
+        service: 'calc'
+        region: ${{ vars.GCP_REGION }}
+        project_id: ${{ vars.GCP_PROJECT_ID }}
+        image: 'docker.io/sevajmurov/calc:${{ env.DATE_TAG }}'
+        flags: --allow-unauthenticated
+        env_vars: |
+              DJANGO_HOST=*
+
+    - name: 'Make public'
+      run: 'gcloud run services add-iam-policy-binding calc --member="allUsers" --role="roles/run.invoker" --region=europe-central2'
+      
+    - name: 'Use output'
+      run: 'curl "${{ steps.deploy.outputs.url }}"'

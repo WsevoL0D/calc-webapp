@@ -1,0 +1,9 @@
+name: 'Set variables'
+description: 'Configures environment/global variables for a workflow'
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        echo "DATE_TAG=$(date +%Y%m%d)" >> $GITHUB_ENV
+      shell: bash
