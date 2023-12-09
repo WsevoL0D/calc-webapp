@@ -1,0 +1,41 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+jobs:
+
+  publish:
+
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_USER: ${{secrets.DOCKER_USER}}
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Docker login
+      env:
+        DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+      run: |
+        docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+    - name: Build images
+      run: |
+        docker build . --file Dockerfile --tag ${DOCKER_USER}/calc:$(date +%Y%m%d)
+        docker build . --file Tests.Dockerfile --tag ${DOCKER_USER}/test:$(date +%Y%m%d)
+    - name: Prepare net and app
+      run: |
+        docker network inspect test_net >/dev/null 2>&1 || docker network create test_net
+        docker run --rm -d --name calc -e DJANGO_HOST=calc --network test_net ${DOCKER_USER}/calc:$(date +%Y%m%d)
+    - name: Run tests
+      run: |
+        sleep 10
+        docker run -t --network test_net --name test --rm ${DOCKER_USER}/test:$(date +%Y%m%d) /usr/local/bin/pytest -vs --port 8000 --host=calc
+    - name: Docker push
+      run: docker push ${DOCKER_USER}/calc:$(date +%Y%m%d)
+    - name: Cleanup
+      run: |
+        docker container stop calc
+        docker network rm test_net
